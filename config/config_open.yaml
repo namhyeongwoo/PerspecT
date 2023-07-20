@@ -1,0 +1,18 @@
+input_file: input/video_short.mp4
+
+json_dir: json_open/
+
+output_file: output/output_video_short.mp4
+
+# Left-Top, Right-Top, Right-Bottom, Left-Bottom
+src_points:
+  - [100, 400]
+  - [640, 80]
+  - [900, 160]
+  - [720, 500]
+
+dst_points:
+  - [0, 0]
+  - [1280, 0]
+  - [1280, 720]
+  - [0, 720]

@@ -1,0 +1,33 @@
+input_num: 3
+input_file_0: input/AlphaPose_1F_view.mp4
+input_file_1: input/AlphaPose_2F_view.mp4
+input_file_2: input/AlphaPose_3F_view.mp4
+
+json_file_0: json_alpha/AlphaPose_1F_view.json
+json_file_1: json_alpha/AlphaPose_2F_view.json
+json_file_2: json_alpha/AlphaPose_3F_view.json
+
+output_file: output/Test.mp4
+
+# Left-Top, Right-Top, Right-Bottom, Left-Bottom
+src_points_0:
+  - [1631, 513] #dd
+  - [533, 716]
+  - [472, 519]
+  - [1293, 437]
+src_points_1:
+  - [1105, 857]
+  - [1031, 461]
+  - [799, 343]
+  - [674, 852]
+src_points_2:
+  - [916, 242]
+  - [1228, 747]
+  - [851, 846]
+  - [637, 284]
+
+dst_points:
+  - [0, 0]
+  - [1280, 0]
+  - [1280, 720]
+  - [0, 720]

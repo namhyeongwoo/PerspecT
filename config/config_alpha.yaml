@@ -1,0 +1,18 @@
+input_file: input/AlphaPose_3F_view.mp4
+
+json_file: json_alpha/AlphaPose_3F_view.json
+
+output_file: output/AlphaPose_3F_view_3.mp4
+
+# Left-Top, Right-Top, Right-Bottom, Left-Bottom
+src_points:
+  - [916, 242]
+  - [1228, 747]
+  - [851, 846]
+  - [637, 284]
+
+dst_points:
+  - [0, 0]
+  - [1920, 0]
+  - [1920, 1080]
+  - [0, 1080]
