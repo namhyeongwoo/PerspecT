@@ -17,7 +17,10 @@ def extract_keypoints(json_data):
     return keypoints
 
 def visualize_keypoints(image, keypoints):
-    for person_keypoints in keypoints:
+    # Get filtered keypoints
+    filtered_keypoints = kalman_filter(keypoints)
+
+    for person_keypoints in filtered_keypoints:
         person_idx = person_keypoints[0]
         random.seed(person_idx)
         for i in range(0, len(person_keypoints[1]), 3):
@@ -28,7 +31,35 @@ def visualize_keypoints(image, keypoints):
             point = cv2.perspectiveTransform(point.reshape(-1, 1, 2), matrix).reshape(-1, 2).astype(np.int16)
             cv2.circle(image, (point[0][0], point[0][1]), 80, (random.randint(0,255), random.randint(0,255), random.randint(0,255)), -1)
             cv2.circle(image, (point[0][0], point[0][1]), 10, (0, 0, 255), -1)
+
     return image
+
+
+# Apply Kalman filter
+def kalman_filter(keypoints, process_noise=1e-5, measurement_noise=0.1):
+    # Initialze Kalman filter parameters
+    state = np.zeros((2,1))
+    covariance = np.eye(2)
+    kalman_gain = np.zeros((2,2))
+
+    filtered_keypoints = []
+    for point in keypoints:
+        measurement = np.array([[point[0], point[1]]])
+
+        # Prediction step
+        predicted_state = state
+        predicted_covariance = covariance + process_noise
+
+        # Update step
+        kalman_gain = predicted_covariance @ np.linalg.inv(predicted_covariance + measurement_noise)
+
+        # Update state and covariance
+        state = predicted_state + kalman_gain @ (measurement - predicted_state)
+        covariance = (np.eye(2) - kalman_gain) @ predicted_covariance
+
+        filtered_keypoints.append([int(state[0]), int(state[1])])
+
+    return filtered_keypoints
 
 # YAML 파일 경로
 config_file = 'config/config_alpha.yaml'
