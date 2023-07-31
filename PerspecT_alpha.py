@@ -20,14 +20,13 @@ def visualize_keypoints(image, keypoints):
     for person_keypoints in keypoints:
         person_idx = person_keypoints[0]
         random.seed(person_idx)
-        for i in range(0, len(person_keypoints[1]), 3):
-            # Get contact point
-            x_c = int((person_keypoints[1][15 * 3] + person_keypoints[1][16 * 3]) / 2)
-            y_c = int((person_keypoints[1][15 * 3 + 1] + person_keypoints[1][16 * 3 + 1]) / 2)
-            point = np.array([[x_c, y_c]]).astype(np.float32)
-            point = cv2.perspectiveTransform(point.reshape(-1, 1, 2), matrix).reshape(-1, 2).astype(np.int16)
-            cv2.circle(image, (point[0][0], point[0][1]), 80, (random.randint(0,255), random.randint(0,255), random.randint(0,255)), -1)
-            cv2.circle(image, (point[0][0], point[0][1]), 10, (0, 0, 255), -1)
+        # Get contact point
+        x_c = int((person_keypoints[1][15 * 3] + person_keypoints[1][16 * 3]) / 2)
+        y_c = int((person_keypoints[1][15 * 3 + 1] + person_keypoints[1][16 * 3 + 1]) / 2)
+        point = np.array([[x_c, y_c]]).astype(np.float32)
+        point = cv2.perspectiveTransform(point.reshape(-1, 1, 2), matrix).reshape(-1, 2).astype(np.int16)
+        cv2.circle(image, (point[0][0], point[0][1]), 80, (random.randint(0,255), random.randint(0,255), random.randint(0,255)), -1)
+        cv2.circle(image, (point[0][0], point[0][1]), 10, (0, 0, 255), -1)
     return image
 
 # YAML 파일 경로

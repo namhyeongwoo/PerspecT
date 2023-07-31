@@ -37,6 +37,7 @@ with open(config_file, 'r') as f:
     config = yaml.safe_load(f)
 
 input_num = config['input_num']
+# alpha = np.full((2010, 920, 3), 1.0 / input_num)
 alpha = np.full((1080, 1920, 3), 1.0 / input_num)
 
 src_points = []
@@ -70,7 +71,8 @@ fps = cap[0].get(cv2.CAP_PROP_FPS)
 
 # 비디오 작성자 초기화
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(output_video_file, fourcc, fps, (1280, 720))
+# out = cv2.VideoWriter(output_video_file, fourcc, fps, (1280, 720))
+out = cv2.VideoWriter(output_video_file, fourcc, fps, (2010, 920))
 
 # 비디오 프레임별로 처리
 frame_idx = 0
@@ -106,7 +108,8 @@ while True:
         else:
             frame_temp = cv2.multiply(alpha, transformed_frame[input_idx])
             blended_frame = cv2.add(blended_frame, frame_temp)
-    blended_frame = cv2.resize(blended_frame, (1280, 720))
+    # blended_frame = cv2.resize(blended_frame, (1280, 720))
+    blended_frame = cv2.resize(blended_frame, (2010, 920))
     blended_frame = blended_frame / 255
 
     # 변환된 프레임을 출력 비디오에 작성
