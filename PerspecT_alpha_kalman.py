@@ -27,8 +27,6 @@ def visualize_keypoints(image, keypoints):
     # Get filtered keypoints
     filtered_keypoints = kalman_filter(keypoints)
 
-    filtered_coord = []
-
     for person_keypoints in filtered_keypoints:
         person_idx = person_keypoints[0]
         random.seed(person_idx)
@@ -42,7 +40,6 @@ def visualize_keypoints(image, keypoints):
             .reshape(-1, 2)
             .astype(np.int16)
         )
-        filtered_coord.append(point)
         cv2.circle(
             image,
             (point[0][0], point[0][1]),
@@ -62,28 +59,37 @@ def visualize_keypoints(image, keypoints):
     return image
 
 
-# Kalman filter
-def kalman_filter(keypoints, process_noise=1, measurement_noise=0.001):
+# 사람의 인덱스에 맞는 kalman filter 객체를 저장
+kalman_filters = {}
+
+
+def kalman_filter(keypoints, process_noise=1, measurement_noise=1):
     # return filtered coordinates
 
-    dt = 1 / 29.97  # 1 / fps
     filtered_coord = []
     for point in keypoints:
-        kf = KalmanFilter(2, 2)  # 2 state variables, 2 measurement variables
+        person_idx = point[0]  # person idx
 
         # Average of both ankles coordinates
         c_x = int((point[1][15 * 3] + point[1][16 * 3]) / 2)
         c_y = int((point[1][15 * 3 + 1] + point[1][16 * 3 + 1]) / 2)
 
-        kf.x = np.array([0, 0])  # state variables
-        kf.F = np.array([[1, dt], [0, 1]])  # state transition matrix
-        kf.H = np.array([[1, 0], [0, 1]])  # measurement func
-        kf.R *= measurement_noise  # measurement noise(uncertainty)
+        if person_idx not in kalman_filters:
+            kf = KalmanFilter(2, 2)  # 2 state variables, 2 measurement variables
+            kf.x = np.array([[c_x], [c_y]])  # state variables
+            kf.F = np.eye(2)  # state transition matrix
+            kf.H = np.eye(2)  # measurement func
+            kf.P = np.eye(2)  # state covariance matrix
+            kf.R = np.eye(2)  # measurement noise
+            kalman_filters[person_idx] = kf  # kalman filter mapping by person_idx
+
+        kf = kalman_filters[person_idx]
+        kf.R *= measurement_noise
 
         kf.predict()  # predict step
         kf.update([[c_x], [c_y]])  # update step
 
-        filtered_coord.append([point[0], kf.x])
+        filtered_coord.append([person_idx, kf.x])
 
     return filtered_coord
 
