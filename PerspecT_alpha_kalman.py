@@ -3,6 +3,7 @@ import numpy as np
 import yaml
 import json
 import random
+from filterpy.kalman import KalmanFilter
 
 
 def perspective_transform(frame):
@@ -19,35 +20,72 @@ def extract_keypoints(json_data):
     return keypoints
 
 
+circles = []  # make trajectory
+
+
 def visualize_keypoints(image, keypoints):
-    for person_keypoints in keypoints:
+    # Get filtered keypoints
+    filtered_keypoints = kalman_filter(keypoints)
+
+    filtered_coord = []
+
+    for person_keypoints in filtered_keypoints:
         person_idx = person_keypoints[0]
         random.seed(person_idx)
-        for i in range(0, len(person_keypoints[1]), 3):
-            # Get contact point
-            x_c = int((person_keypoints[1][15 * 3] + person_keypoints[1][16 * 3]) / 2)
-            y_c = int(
-                (person_keypoints[1][15 * 3 + 1] + person_keypoints[1][16 * 3 + 1]) / 2
-            )
-            point = np.array([[x_c, y_c]]).astype(np.float32)
-            point = (
-                cv2.perspectiveTransform(point.reshape(-1, 1, 2), matrix)
-                .reshape(-1, 2)
-                .astype(np.int16)
-            )
-            cv2.circle(
-                image,
-                (point[0][0], point[0][1]),
-                80,
-                (
-                    random.randint(0, 255),
-                    random.randint(0, 255),
-                    random.randint(0, 255),
-                ),
-                -1,
-            )
-            cv2.circle(image, (point[0][0], point[0][1]), 10, (0, 0, 255), -1)
+        # Get contact point
+        x_c = int(person_keypoints[1][0])
+        y_c = int(person_keypoints[1][1])
+
+        point = np.array([[x_c, y_c]]).astype(np.float32)
+        point = (
+            cv2.perspectiveTransform(point.reshape(-1, 1, 2), matrix)
+            .reshape(-1, 2)
+            .astype(np.int16)
+        )
+        filtered_coord.append(point)
+        cv2.circle(
+            image,
+            (point[0][0], point[0][1]),
+            80,
+            (
+                random.randint(0, 255),
+                random.randint(0, 255),
+                random.randint(0, 255),
+            ),
+            -1,
+        )
+        cv2.circle(image, (point[0][0], point[0][1]), 10, (0, 0, 255), -1)
+        circles.append((point[0][0], point[0][1]))
+
+    for circle in circles:
+        cv2.circle(image, circle, 10, (0, 0, 255), -1)
     return image
+
+
+# Kalman filter
+def kalman_filter(keypoints, process_noise=1, measurement_noise=0.001):
+    # return filtered coordinates
+
+    dt = 1 / 29.97  # 1 / fps
+    filtered_coord = []
+    for point in keypoints:
+        kf = KalmanFilter(2, 2)  # 2 state variables, 2 measurement variables
+
+        # Average of both ankles coordinates
+        c_x = int((point[1][15 * 3] + point[1][16 * 3]) / 2)
+        c_y = int((point[1][15 * 3 + 1] + point[1][16 * 3 + 1]) / 2)
+
+        kf.x = np.array([0, 0])  # state variables
+        kf.F = np.array([[1, dt], [0, 1]])  # state transition matrix
+        kf.H = np.array([[1, 0], [0, 1]])  # measurement func
+        kf.R *= measurement_noise  # measurement noise(uncertainty)
+
+        kf.predict()  # predict step
+        kf.update([[c_x], [c_y]])  # update step
+
+        filtered_coord.append([point[0], kf.x])
+
+    return filtered_coord
 
 
 # YAML 파일 경로
@@ -60,6 +98,7 @@ with open(config_file, "r") as f:
 # 변환에 사용할 원본과 목표 좌표
 src_points = np.float32(config["src_points"])
 dst_points = np.float32(config["dst_points"])
+# 매핑 좌표 인자로 전달하면, 변환에 필요한 3x3 변환 행렬 리턴
 matrix = cv2.getPerspectiveTransform(src_points, dst_points)
 
 # 입력 비디오 파일 경로
